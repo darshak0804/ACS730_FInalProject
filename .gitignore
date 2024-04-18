@@ -1,0 +1,25 @@
+# Ignore directory used by Terraform for local state and modules
+**/.terraform/*
+
+# Ignore all .tfvars files, which might contain sensitive data
+*.tfvars
+
+# Ignore override files as they are usually used to override resources locally
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore system files and directories
+.DS_Store
+Thumbs.db
+
+# Ignore any logs
+*.log
+
+# Ignore the .git directory (though this is usually not necessary as Git naturally ignores it)
+.git/
