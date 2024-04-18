@@ -12,6 +12,10 @@ output "public_subnets_route_table_id" {
   value = aws_route_table.public_subnets_route_table.id
 }
 
+output "private_subnets_route_table_id" {
+  value = aws_route_table.public_subnets_route_table.id
+}
+
 output "vpc_id" {
   value = aws_vpc.main.id
 }

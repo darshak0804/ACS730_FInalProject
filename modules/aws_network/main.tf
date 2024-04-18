@@ -48,7 +48,7 @@ resource "aws_subnet" "public_subnet" {
   )
 }
 
-# Add provisioning of private subnets in the custom VPC
+# Making private subnets in VPC
 resource "aws_subnet" "private_subnet" {
   count             = length(var.private_cidr_blocks)
   vpc_id            = aws_vpc.main.id
@@ -72,7 +72,7 @@ resource "aws_internet_gateway" "igw" {
   )
 }
 
-# Route table pointing public subnets to Internet Gateway (IGW)
+# Route table of public subnets accessing Internet Gateway (IGW)
 resource "aws_route_table" "public_subnets_route_table" {
   vpc_id = aws_vpc.main.id
   route {
@@ -89,4 +89,42 @@ resource "aws_route_table_association" "public_subnets_route_table_association" 
   count          = length(aws_subnet.public_subnet[*].id)
   route_table_id = aws_route_table.public_subnets_route_table.id
   subnet_id      = aws_subnet.public_subnet[count.index].id
+}
+
+# Elastic IP for NAT Gateway
+resource "aws_eip" "nat" {
+  vpc = true
+}
+
+# NAT Gateway in the first public subnet
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public_subnet[0].id
+  depends_on    = [aws_internet_gateway.igw]
+
+  tags = merge(
+    local.default_tags, {
+      Name = "${var.prefix}-NAT-Gateway"
+    }
+  )
+}
+
+# Route table for private subnets
+resource "aws_route_table" "private_subnets_route_table" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
+  }
+
+  tags = {
+    Name = "${var.prefix}-private-subnets-route-table"
+  }
+}
+
+# Associate private subnets with the custom route table
+resource "aws_route_table_association" "private_subnets_route_table_association" {
+  count          = length(aws_subnet.private_subnet[*].id)
+  route_table_id = aws_route_table.private_subnets_route_table.id
+  subnet_id      = aws_subnet.private_subnet[count.index].id
 }
